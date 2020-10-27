@@ -7,10 +7,15 @@
     <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
     <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
     <style>
-      #zoom{
-        position: relative;
-        top:30px;
+      *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+      }
+      .custom-zoom{
+        position: absolute;
         z-index:999;
+ 
       }
       a.skiplink {
         position: absolute;
@@ -27,6 +32,9 @@
         width: auto;
         background-color: #fff;
         padding: 0.3em;
+      }
+      #map{
+        height:100vh;
       }
       #map:focus {
         outline: #4A74A8 solid 0.15em;
@@ -53,13 +61,21 @@
         })
       });
 
-      let zoom=new ol.control.Zoom({
+      let zoom=new ol.control.Zoom(
+        {
+        className:'custom-zoom',
         target:document.querySelector('#zoom')
-      })
-
-
-
+      }
+      )
       map.addControl(zoom)
+
+
+
+      let mousePosition=new ol.control.MousePosition()
+      map.addControl(mousePosition)
+
+      let attr=ol.control.Attribution()
+      map.addControl(attr)
     </script>
   </body>
 </html
