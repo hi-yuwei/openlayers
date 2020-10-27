@@ -1,81 +1,109 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Accessible Map</title>
-    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
-    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
-    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
-    <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
-    <style>
-      *{
-        margin:0;
-        padding:0;
-        box-sizing:border-box;
-      }
-      .custom-zoom{
-        position: absolute;
-        z-index:999;
- 
-      }
-      a.skiplink {
-        position: absolute;
-        clip: rect(1px, 1px, 1px, 1px);
-        padding: 0;
-        border: 0;
-        height: 1px;
-        width: 1px;
-        overflow: hidden;
-      }
-      a.skiplink:focus {
-        clip: auto;
-        height: auto;
-        width: auto;
-        background-color: #fff;
-        padding: 0.3em;
-      }
-      #map{
-        height:100vh;
-      }
-      #map:focus {
-        outline: #4A74A8 solid 0.15em;
-      }
-    </style>
-  </head>
-  <body>
-    <a class="skiplink" href="#map">Go to map</a>
-    <div id="zoom"></div>
-    <div id="map" class="map" tabindex="0"></div>
+    <head>
+        <title>openlayers</title>
+        <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" />
+        <link rel="stylesheet" href="./index.css" />
+        <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+        <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+        <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+    </head>
+    <body>
+        <a class="skiplink" href="#map">Go to map</a>
+        <div id="zoom"></div>
+        <div id="map" class="map" tabindex="0"></div>
 
-    <script>
-      var map = new ol.Map({
-        layers: [
-          new ol.layer.Tile({
-            source: new ol.source.OSM()
-          })
-        ],
-        target: 'map',
-        controls: [],
-        view: new ol.View({
-          center: ol.proj.fromLonLat([119.602048,30.617824]),//地图中心
-          zoom: 14
-        })
-      });
+        <script>
+            var map = new ol.Map({
+                layers: [
+                    new ol.layer.Tile({
+                        source: new ol.source.OSM()
+                    })
+                ],
+                target: 'map',
+                loadTilesWhileAnimating: true,
+                loadTilesWhileInteracting: true,
+                controls: ol.control.defaults().extend([new ol.control.FullScreen()]),
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([120.118853, 30.24662]), //地图中心
+                    zoom: 18,
+                    //设置缩放阈值
+                    minZoom: 10,
+                    maxZoom: 18
+                })
+            })
 
-      let zoom=new ol.control.Zoom(
-        {
-        className:'custom-zoom',
-        target:document.querySelector('#zoom')
-      }
-      )
-      map.addControl(zoom)
+            //缩放地图~按钮
+            let zoom = new ol.control.Zoom({
+                className: 'custom-zoom',
+                target: document.querySelector('#zoom')
+            })
 
+            map.addControl(zoom)
 
+            // 鼠标在地图上坐标
+            let mousePosition = new ol.control.MousePosition()
+            map.addControl(mousePosition)
 
-      let mousePosition=new ol.control.MousePosition()
-      map.addControl(mousePosition)
+            //地图版权信息
+            let attr = new ol.control.Attribution()
+            map.addControl(attr)
 
-      let attr=ol.control.Attribution()
-      map.addControl(attr)
-    </script>
-  </body>
-</html
+            //缩放地图~滑块
+            let zoomSlider = new ol.control.ZoomSlider()
+            map.addControl(zoomSlider)
+
+            //鹰眼地图
+            let overviewMap = new ol.control.OverviewMap({ collapsed: false })
+            map.addControl(overviewMap)
+
+            //移除控件
+            setTimeout(() => {
+                map.removeControl(zoomSlider)
+            }, 2000)
+
+            //实例化矢量点要素，通过矢量图层添加到地图容器中
+            //这样就实现了预先加载图文标注
+            var iconFeature = new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.fromLonLat([120.118853, 30.24662])),
+                name: '北京市', //名称属性
+                population: 2115 //人口数（万）
+            })
+            //设置点要素样式
+            iconFeature.setStyle(createLabelStyle(iconFeature))
+            //矢量标注的数据源
+            var vectorSource = new ol.source.Vector({
+                features: [iconFeature]
+            })
+            //矢量标注图层
+            var vectorLayer = new ol.layer.Vector({
+                source: vectorSource
+            })
+            map.addLayer(vectorLayer)
+
+            //矢量标注样式设置函数，设置image为图标ol.style.Icon
+            function createLabelStyle(feature) {
+                return new ol.style.Style({
+                    image: new ol.style.Icon({
+                        opacity: 1,
+                        scale: 1,
+                        src:
+                            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABGklEQVQ4T6WTTU4CQRCF3yPRZMKQ6AJYCjuHjcMJlBPIDcQb6EnkBuoN8ARyA2c2g8veAgtJkJCgoUj3/OgwktDS2+76+r2qV8SBh9v18tE4WXw5NwC6Avr6npAAwKB8tHzmqZr9rskB5tPzK675CLLxpzARJSW5rVTfh+l9BjDFUnrdx5Fw3UkhBmBkr5y3nT8XfIoqHy/b2o4BfE69Owgf9vk9e0O5d6ujvgHMJ96Q4KUNQAQvlXrUjRWMPQXyzAYAEeXWR83/A4DQrUV+bGHcGpC4tlGQt3BoE5MxBhZ9MPLjlCbHJkgA2m4t0vH+AZhpTFqa+gTgYkc/QgC9tLgAyFL57fQg8JEsE/QyEYEOzja4sI02k9BvN9PDbxH60zbUAAAAAElFTkSuQmCC' //图标的URL
+                    }),
+                    text: new ol.style.Text({
+                        offsetY: 16,
+                        text: feature.get('name'), //文本内容
+                        fill: new ol.style.Fill({
+                            //文本填充样式（即文字颜色)
+                            color: '#000'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#F00',
+                            width: 1
+                        })
+                    })
+                })
+            }
+        </script>
+    </body>
+</html>
